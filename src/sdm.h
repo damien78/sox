@@ -16,6 +16,12 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/*
+ Damien Plisson <damien78@audirvana.com> Apr 20th, 2016
+ Added 64bit sample => 8bit packets SDM processing functions
+ */
+
+
 #ifndef SOX_SDM_H
 #define SOX_SDM_H
 
@@ -37,6 +43,20 @@ int sdm_process(sdm_t *s, const sox_sample_t *ibuf, sox_sample_t *obuf,
                 size_t *ilen, size_t *olen);
 
 int sdm_drain(sdm_t *s, sox_sample_t *obuf, size_t *olen);
+
+///Process input in 64bit format into a 8bit packet of 1bit samples
+/// - parameter p: the sdm private structure
+/// - parameter inSamples: input buffer of 64bit (double) samples
+/// - parameter outPackets: output buffer, in 8bit packets of 8 1bit samples
+/// - parameter inLength: number of samples in input buffer
+/// - important: outPackets size must be at least inLength / 8
+/// - returns: number of packets in outPackets
+size_t sdm_packet_process(sdm_t *p, const double *inSamples, uint8_t *outPackets, size_t inLength);
+
+///Drain filter in 8bit packets
+/// - parameter outBufSize: size of the outPackets buffer
+/// - returns: number of packets in outPackets
+size_t sdm_packet_drain(sdm_t *p, uint8_t *outPackets, size_t outBufSize);
 
 void sdm_close(sdm_t *s);
 
