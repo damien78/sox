@@ -16,6 +16,7 @@
 
 #include "sox_i.h"
 #include "aiff.h"
+#include "id3.h"
 
 #include <time.h>      /* for time stamping comments */
 #include <stdlib.h>
@@ -62,7 +63,6 @@ int lsx_aiffstartread(sox_format_t * ft)
   size_t ssndsize = 0;
   char *annotation;
   char *author;
-  char *comment = NULL;
   char *copyright;
   char *nametext;
 
@@ -270,6 +270,7 @@ int lsx_aiffstartread(sox_format_t * ft)
       free(annotation);
     }
     else if (strncmp(buf, "COMT", (size_t)4) == 0) {
+	  char *comment = NULL;
       rc = commentChunk(&comment, "Comment:", ft);
       if (rc) {
         /* Fail already called in function */
@@ -306,6 +307,13 @@ int lsx_aiffstartread(sox_format_t * ft)
       }
       free(copyright);
     }
+    else if (strncmp(buf, "ID3 ", (size_t)4) == 0) {
+      off_t offs;
+      lsx_readdw(ft, &chunksize);
+      offs = lsx_tell(ft);
+      lsx_id3_read_tag(ft, 0);
+      lsx_seeki(ft, offs + chunksize, SEEK_SET);
+    }
     else {
       if (lsx_eof(ft))
         break;
@@ -314,6 +322,8 @@ int lsx_aiffstartread(sox_format_t * ft)
       lsx_readdw(ft, &chunksize);
       if (lsx_eof(ft))
         break;
+	  /* account for padding after odd-sized chunks */
+	  chunksize += chunksize & 1;
       /* Skip the chunk using lsx_readb() so we may read
          from a pipe */
       while (chunksize-- > 0) {
