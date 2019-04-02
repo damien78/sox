@@ -21,6 +21,10 @@
 #include <mmsystem.h>
 #include <mmreg.h>
 
+#ifdef _WIN32
+#pragma comment(lib,"Winmm.lib")
+#endif
+
 /* Larger means more latency (difference between the status line and the audio you hear),
  * but it means lower chance of stuttering/glitching. 2 buffers is usually enough. Use
  * 4 if you want to be extra-safe.
