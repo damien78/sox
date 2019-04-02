@@ -37,6 +37,30 @@
   #include <magic.h>
 #endif
 
+#ifdef _WIN32
+ //Avoid Winsock.h to be included
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <wtypes.h>
+#include <winnls.h>
+
+static wchar_t *utf8_to_utf16(const char *input)
+{
+	wchar_t *Buffer;
+	int BuffSize = 0, Result = 0;
+
+	BuffSize = MultiByteToWideChar(CP_UTF8, 0, input, -1, NULL, 0);
+	Buffer = (wchar_t*)malloc(sizeof(wchar_t) * BuffSize);
+	if (Buffer)
+	{
+		Result = MultiByteToWideChar(CP_UTF8, 0, input, -1, Buffer, BuffSize);
+	}
+
+	return ((Result > 0) && (Result <= BuffSize)) ? Buffer : NULL;
+}
+#endif
+
 #define PIPE_AUTO_DETECT_SIZE 256 /* Only as much as we can rewind a pipe */
 #define AUTO_DETECT_SIZE 4096     /* For seekable file, so no restriction */
 
@@ -403,7 +427,13 @@ static FILE * xfopen(char const * identifier, char const * mode, lsx_io_type * i
 #endif
     return f;
   }
+#ifdef _WIN32
+  FILE* res = NULL;
+  _wfopen_s(&res, utf8_to_utf16(identifier), utf8_to_utf16(mode));
+  return res;
+#else
   return fopen(identifier, mode);
+#endif
 }
 
 /* Hack to rewind pipes (a small amount).
