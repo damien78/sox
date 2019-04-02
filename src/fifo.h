@@ -59,8 +59,11 @@ UNUSED static void * fifo_reserve(fifo_t * f, FIFO_SIZE_T n)
       f->begin = 0;
       continue;
     }
-    f->allocation += n;
-    f->data = lsx_realloc(f->data, f->allocation);
+	//Optimize growth with exponential memory allocation
+	if (n > 0) {
+		f->allocation += (f->allocation >> 1) + 8192;
+		f->data = lsx_realloc(f->data, f->allocation);
+	}
   }
 }
 
