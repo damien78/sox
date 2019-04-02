@@ -27,21 +27,33 @@
 
 #include "sox_i.h"
 
+#if _MSC_VER && defined(SOX_IMPORT)
+#define SOX_EXPORT __declspec(dllimport)
+#elif _MSC_VER && defined(_DLL)
+#define SOX_EXPORT __declspec(dllexport)
+#else
+#define SOX_EXPORT
+#endif
+
+
 #define SDM_TRELLIS_MAX_ORDER 32
 #define SDM_TRELLIS_MAX_NUM   32
 #define SDM_TRELLIS_MAX_LAT   2048
 
 typedef struct sdm sdm_t;
 
+SOX_EXPORT
 sdm_t *sdm_init(const char *filter_name,
                 unsigned freq,
                 unsigned trellis_order,
                 unsigned trellis_num,
                 unsigned trellis_latency);
 
+SOX_EXPORT
 int sdm_process(sdm_t *s, const sox_sample_t *ibuf, sox_sample_t *obuf,
                 size_t *ilen, size_t *olen);
 
+SOX_EXPORT
 int sdm_drain(sdm_t *s, sox_sample_t *obuf, size_t *olen);
 
 ///Process input in 64bit format into a 8bit packet of 1bit samples
@@ -51,13 +63,16 @@ int sdm_drain(sdm_t *s, sox_sample_t *obuf, size_t *olen);
 /// - parameter inLength: number of samples in input buffer
 /// - important: outPackets size must be at least inLength / 8
 /// - returns: number of packets in outPackets
+SOX_EXPORT
 size_t sdm_packet_process(sdm_t *p, const double *inSamples, uint8_t *outPackets, size_t inLength);
 
 ///Drain filter in 8bit packets
 /// - parameter outBufSize: size of the outPackets buffer
 /// - returns: number of packets in outPackets
+SOX_EXPORT
 size_t sdm_packet_drain(sdm_t *p, uint8_t *outPackets, size_t outBufSize);
 
+SOX_EXPORT
 void sdm_close(sdm_t *s);
 
 #endif

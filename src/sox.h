@@ -23,6 +23,14 @@ LSX_ and lsx_ symbols should not be used by libSoX-based applications.
 #include <stdarg.h>
 #include <stddef.h>
 
+#if _MSC_VER && defined(SOX_IMPORT)
+#define SOX_EXPORT __declspec(dllimport)
+#elif _MSC_VER && defined(_DLL)
+#define SOX_EXPORT __declspec(dllexport)
+#else
+#define SOX_EXPORT
+#endif
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -30,6 +38,19 @@ extern "C" {
 /* Suppress warnings from use of type long long. */
 #if defined __GNUC__
 #pragma GCC system_header
+#endif
+
+#if defined __GNUC__
+#define LSX_GCC(maj, min) \
+  ((__GNUC__ > (maj)) || (__GNUC__ == (maj) && __GNUC_MINOR__ >= (min)))
+#else
+#define LSX_GCC(maj, min) 0
+#endif
+
+#if LSX_GCC(4,9)
+#define _Ret_ __attribute__ ((returns_nonnull))
+#define _Ret_valid_ _Ret_
+#define _Ret_z_ _Ret_
 #endif
 
 /*****************************************************************************
@@ -1647,6 +1668,7 @@ Client API:
 Returns version number string of libSoX, for example, "14.4.0".
 @returns The version number string of libSoX, for example, "14.4.0".
 */
+SOX_EXPORT
 LSX_RETURN_VALID_Z LSX_RETURN_PURE
 char const *
 LSX_API
@@ -1657,6 +1679,7 @@ Client API:
 Returns information about this build of libsox.
 @returns Pointer to a version information structure.
 */
+SOX_EXPORT
 LSX_RETURN_VALID LSX_RETURN_PURE
 sox_version_info_t const *
 LSX_API
@@ -1667,6 +1690,7 @@ Client API:
 Returns a pointer to the structure with libSoX's global settings.
 @returns a pointer to the structure with libSoX's global settings.
 */
+SOX_EXPORT
 LSX_RETURN_VALID LSX_RETURN_PURE
 sox_globals_t *
 LSX_API
@@ -1685,6 +1709,7 @@ Returns a pointer to the list of available encodings.
 End of list indicated by name == NULL.
 @returns pointer to the list of available encodings.
 */
+SOX_EXPORT
 LSX_RETURN_ARRAY LSX_RETURN_PURE
 sox_encodings_info_t const *
 LSX_API
@@ -1701,6 +1726,7 @@ End of list indicated by name == NULL.
 Client API:
 Fills in an encodinginfo with default values.
 */
+SOX_EXPORT
 void
 LSX_API
 sox_init_encodinginfo(
@@ -1717,6 +1743,7 @@ format handler should be used instead of a pre-determined precision.
 16), or returns 0 to indicate that the value returned by the format handler
 should be used instead of a pre-determined precision.
 */
+SOX_EXPORT
 LSX_RETURN_PURE
 unsigned
 LSX_API
@@ -1730,6 +1757,7 @@ Client API:
 Returns the number of items in the metadata block.
 @returns the number of items in the metadata block.
 */
+SOX_EXPORT
 size_t
 LSX_API
 sox_num_comments(
@@ -1740,6 +1768,7 @@ sox_num_comments(
 Client API:
 Adds an "id=value" item to the metadata block.
 */
+SOX_EXPORT
 void
 LSX_API
 sox_append_comment(
@@ -1751,6 +1780,7 @@ sox_append_comment(
 Client API:
 Adds a newline-delimited list of "id=value" items to the metadata block.
 */
+SOX_EXPORT
 void
 LSX_API
 sox_append_comments(
@@ -1763,6 +1793,7 @@ Client API:
 Duplicates the metadata block.
 @returns the copied metadata block.
 */
+SOX_EXPORT
 LSX_RETURN_OPT
 sox_comments_t
 LSX_API
@@ -1774,6 +1805,7 @@ sox_copy_comments(
 Client API:
 Frees the metadata block.
 */
+SOX_EXPORT
 void
 LSX_API
 sox_delete_comments(
@@ -1785,6 +1817,7 @@ Client API:
 If "id=value" is found, return value, else return null.
 @returns value, or null if value not found.
 */
+SOX_EXPORT
 LSX_RETURN_OPT
 char const *
 LSX_API
@@ -1798,6 +1831,7 @@ Client API:
 Find and load format handler plugins.
 @returns SOX_SUCCESS if successful.
 */
+SOX_EXPORT
 int
 LSX_API
 sox_format_init(void);
@@ -1806,6 +1840,7 @@ sox_format_init(void);
 Client API:
 Unload format handler plugins.
 */
+SOX_EXPORT
 void
 LSX_API
 sox_format_quit(void);
@@ -1815,6 +1850,7 @@ Client API:
 Initialize effects library.
 @returns SOX_SUCCESS if successful.
 */
+SOX_EXPORT
 int
 LSX_API
 sox_init(void);
@@ -1824,6 +1860,7 @@ Client API:
 Close effects library and unload format handler plugins.
 @returns SOX_SUCCESS if successful.
 */
+SOX_EXPORT
 int
 LSX_API
 sox_quit(void);
@@ -1833,6 +1870,7 @@ Client API:
 Returns the table of format handler names and functions.
 @returns the table of format handler names and functions.
 */
+SOX_EXPORT
 LSX_RETURN_ARRAY LSX_RETURN_PURE
 sox_format_tab_t const *
 LSX_API
@@ -1849,11 +1887,12 @@ Client API:
 Opens a decoding session for a file. Returned handle must be closed with sox_close().
 @returns The handle for the new session, or null on failure.
 */
+SOX_EXPORT
 LSX_RETURN_OPT
 sox_format_t *
 LSX_API
 sox_open_read(
-    LSX_PARAM_IN_Z   char               const * path,      /**< Path to file to be opened (required). */
+    LSX_PARAM_IN_Z   char               const * path,      /**< Path to file to be opened (required). UTF-8 path on Windows */
     LSX_PARAM_IN_OPT sox_signalinfo_t   const * signal,    /**< Information already known about audio stream, or NULL if none. */
     LSX_PARAM_IN_OPT sox_encodinginfo_t const * encoding,  /**< Information already known about sample encoding, or NULL if none. */
     LSX_PARAM_IN_OPT_Z char             const * filetype   /**< Previously-determined file type, or NULL to auto-detect. */
@@ -1864,6 +1903,7 @@ Client API:
 Opens a decoding session for a memory buffer. Returned handle must be closed with sox_close().
 @returns The handle for the new session, or null on failure.
 */
+SOX_EXPORT
 LSX_RETURN_OPT
 sox_format_t *
 LSX_API
@@ -1880,6 +1920,7 @@ Client API:
 Returns true if the format handler for the specified file type supports the specified encoding.
 @returns true if the format handler for the specified file type supports the specified encoding.
 */
+SOX_EXPORT
 sox_bool
 LSX_API
 sox_format_supports_encoding(
@@ -1893,6 +1934,7 @@ Client API:
 Gets the format handler for a specified file type.
 @returns The found format handler, or null if not found.
 */
+SOX_EXPORT
 LSX_RETURN_OPT
 sox_format_handler_t const *
 LSX_API
@@ -1907,6 +1949,7 @@ Client API:
 Opens an encoding session for a file. Returned handle must be closed with sox_close().
 @returns The new session handle, or null on failure.
 */
+SOX_EXPORT
 LSX_RETURN_OPT
 sox_format_t *
 LSX_API
@@ -1924,6 +1967,7 @@ Client API:
 Opens an encoding session for a memory buffer. Returned handle must be closed with sox_close().
 @returns The new session handle, or null on failure.
 */
+SOX_EXPORT
 LSX_RETURN_OPT
 sox_format_t *
 LSX_API
@@ -1941,6 +1985,7 @@ Client API:
 Opens an encoding session for a memstream buffer. Returned handle must be closed with sox_close().
 @returns The new session handle, or null on failure.
 */
+SOX_EXPORT
 LSX_RETURN_OPT
 sox_format_t *
 LSX_API
@@ -1958,6 +2003,7 @@ Client API:
 Reads samples from a decoding session into a sample buffer.
 @returns Number of samples decoded, or 0 for EOF.
 */
+SOX_EXPORT
 size_t
 LSX_API
 sox_read(
@@ -1971,6 +2017,7 @@ Client API:
 Writes samples to an encoding session from a sample buffer.
 @returns Number of samples encoded.
 */
+SOX_EXPORT
 size_t
 LSX_API
 sox_write(
@@ -1984,6 +2031,7 @@ Client API:
 Closes an encoding or decoding session.
 @returns SOX_SUCCESS if successful.
 */
+SOX_EXPORT
 int
 LSX_API
 sox_close(
@@ -1995,6 +2043,7 @@ Client API:
 Sets the location at which next samples will be decoded. Returns SOX_SUCCESS if successful.
 @returns SOX_SUCCESS if successful.
 */
+SOX_EXPORT
 int
 LSX_API
 sox_seek(
@@ -2008,6 +2057,7 @@ Client API:
 Finds a format handler by name.
 @returns Format handler data, or null if not found.
 */
+SOX_EXPORT
 LSX_RETURN_OPT
 sox_format_handler_t const *
 LSX_API
@@ -2021,6 +2071,7 @@ Client API:
 Returns global parameters for effects
 @returns global parameters for effects.
 */
+SOX_EXPORT
 LSX_RETURN_VALID LSX_RETURN_PURE
 sox_effects_globals_t *
 LSX_API
@@ -2037,6 +2088,7 @@ Client API:
 Finds the effect handler with the given name.
 @returns Effect pointer, or null if not found.
 */
+SOX_EXPORT
 LSX_RETURN_OPT LSX_RETURN_PURE
 sox_effect_handler_t const *
 LSX_API
@@ -2049,6 +2101,7 @@ Client API:
 Creates an effect using the given handler.
 @returns The new effect, or null if not found.
 */
+SOX_EXPORT
 LSX_RETURN_OPT
 sox_effect_t *
 LSX_API
@@ -2061,6 +2114,7 @@ Client API:
 Applies the command-line options to the effect.
 @returns the number of arguments consumed.
 */
+SOX_EXPORT
 int
 LSX_API
 sox_effect_options(
@@ -2074,6 +2128,7 @@ Client API:
 Returns an array containing the known effect handlers.
 @returns An array containing the known effect handlers.
 */
+SOX_EXPORT
 LSX_RETURN_VALID_Z LSX_RETURN_PURE
 sox_effect_fn_t const *
 LSX_API
@@ -2090,6 +2145,7 @@ Client API:
 Initializes an effects chain. Returned handle must be closed with sox_delete_effects_chain().
 @returns Handle, or null on failure.
 */
+SOX_EXPORT
 LSX_RETURN_OPT
 sox_effects_chain_t *
 LSX_API
@@ -2102,6 +2158,7 @@ sox_create_effects_chain(
 Client API:
 Closes an effects chain.
 */
+SOX_EXPORT
 void
 LSX_API
 sox_delete_effects_chain(
@@ -2113,6 +2170,7 @@ Client API:
 Adds an effect to the effects chain, returns SOX_SUCCESS if successful.
 @returns SOX_SUCCESS if successful.
 */
+SOX_EXPORT
 int
 LSX_API
 sox_add_effect(
@@ -2127,6 +2185,7 @@ Client API:
 Runs the effects chain, returns SOX_SUCCESS if successful.
 @returns SOX_SUCCESS if successful.
 */
+SOX_EXPORT
 int
 LSX_API
 sox_flow_effects(
@@ -2140,6 +2199,7 @@ Client API:
 Gets the number of clips that occurred while running an effects chain.
 @returns the number of clips that occurred while running an effects chain.
 */
+SOX_EXPORT
 sox_uint64_t
 LSX_API
 sox_effects_clips(
@@ -2151,6 +2211,7 @@ Client API:
 Shuts down an effect (calls stop on each of its flows).
 @returns the number of clips from all flows.
 */
+SOX_EXPORT
 sox_uint64_t
 LSX_API
 sox_stop_effect(
@@ -2161,6 +2222,7 @@ sox_stop_effect(
 Client API:
 Adds an already-initialized effect to the end of the chain.
 */
+SOX_EXPORT
 void
 LSX_API
 sox_push_effect_last(
@@ -2173,6 +2235,7 @@ Client API:
 Removes and returns an effect from the end of the chain.
 @returns the removed effect, or null if no effects.
 */
+SOX_EXPORT
 LSX_RETURN_OPT
 sox_effect_t *
 LSX_API
@@ -2184,6 +2247,7 @@ sox_pop_effect_last(
 Client API:
 Shut down and delete an effect.
 */
+SOX_EXPORT
 void
 LSX_API
 sox_delete_effect(
@@ -2194,6 +2258,7 @@ sox_delete_effect(
 Client API:
 Shut down and delete the last effect in the chain.
 */
+SOX_EXPORT
 void
 LSX_API
 sox_delete_effect_last(
@@ -2204,6 +2269,7 @@ sox_delete_effect_last(
 Client API:
 Shut down and delete all effects in the chain.
 */
+SOX_EXPORT
 void
 LSX_API
 sox_delete_effects(
@@ -2217,6 +2283,7 @@ skipping the part that will be trimmed anyway (get trim start, seek, then
 clear trim start).
 @returns the sample offset of the start of the trim.
 */
+SOX_EXPORT
 sox_uint64_t
 LSX_API
 sox_trim_get_start(
@@ -2227,6 +2294,7 @@ sox_trim_get_start(
 Client API:
 Clears the start of the trim to 0.
 */
+SOX_EXPORT
 void
 LSX_API
 sox_trim_clear_start(
@@ -2238,6 +2306,7 @@ Client API:
 Returns true if the specified file is a known playlist file type.
 @returns true if the specified file is a known playlist file type.
 */
+SOX_EXPORT
 sox_bool
 LSX_API
 sox_is_playlist(
@@ -2249,6 +2318,7 @@ Client API:
 Parses the specified playlist file.
 @returns SOX_SUCCESS if successful.
 */
+SOX_EXPORT
 int
 LSX_API
 sox_parse_playlist(
@@ -2263,6 +2333,7 @@ Converts a SoX error code into an error string.
 @returns error string corresponding to the specified error code,
 or a generic message if the error code is not recognized.
 */
+SOX_EXPORT
 LSX_RETURN_VALID_Z LSX_RETURN_PURE
 char const *
 LSX_API
@@ -2277,6 +2348,7 @@ Gets the basename of the specified file; for example, the basename of
 @returns the number of characters written to base_buffer, excluding the null,
 or 0 on failure.
 */
+SOX_EXPORT
 size_t
 LSX_API
 sox_basename(
@@ -2451,7 +2523,7 @@ Finds the file extension for a filename.
 @returns the file extension, not including the '.', or null if filename does
 not have an extension.
 */
-LSX_RETURN_VALID_Z LSX_RETURN_PURE
+LSX_RETURN_OPT LSX_RETURN_PURE
 char const *
 LSX_API
 lsx_find_file_extension(

@@ -835,12 +835,10 @@ static const sdm_filter_t sdm_filters[] = {
 static const sdm_filter_t *sdm_find_filter(const char *name, unsigned freq)
 {
   unsigned i;
-  
   for (i = 0; i < array_length(sdm_filters); i++)
     if (!name || !strcmp(name, sdm_filters[i].name))
       if (sdm_filters[i].freq <= freq)
         return &sdm_filters[i];
-  
   return NULL;
 }
 
@@ -871,7 +869,7 @@ static double sdm_filter_calc(const double *s, double *d,
 }
 #endif
 
-#pragma mark - Trellis paths method
+//MARK:- Trellis paths method
 
 #ifndef sdm_filter_calc2
 static void sdm_filter_calc2(sdm_state_t *src, sdm_state_t *dst,
@@ -1103,7 +1101,7 @@ static sox_sample_t sdm_sample_trellis(sdm_t *p, double x)
   return output ? SOX_SAMPLE_MAX : -SOX_SAMPLE_MAX;
 }
 
-#pragma mark - Simple noise filtering
+//MARK:- Simple noise filtering
 
 static sox_sample_t sdm_sample_1bit(sdm_t *p, double x)
 {
@@ -1121,7 +1119,7 @@ static sox_sample_t sdm_sample_1bit(sdm_t *p, double x)
   return y;
 }
 
-#pragma mark - Processing
+//MARK:- Processing
 
 int sdm_process(sdm_t *p, const sox_sample_t *ibuf, sox_sample_t *obuf,
                 size_t *ilen, size_t *olen)
@@ -1336,7 +1334,7 @@ void sdm_close(sdm_t *p)
   aligned_free(p);
 }
 
-#pragma mark - SoX interface
+//MARK:- SoX interface
 
 typedef struct sdm_effect {
   sdm_t        *sdm;

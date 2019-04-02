@@ -26,6 +26,7 @@
 #define _GNU_SOURCE
 #include "sox_i.h"
 #include "fft4g.h"
+#include "rate.h"
 #include "dft_filter.h"
 #include <assert.h>
 #include <string.h>
@@ -654,12 +655,39 @@ static int flow(sox_effect_t * effp, const sox_sample_t * ibuf,
   return SOX_SUCCESS;
 }
 
+int sox_rate_flow_double(sox_effect_t * effp, const double * ibuf,
+	double * obuf, size_t * isamp, size_t * osamp)
+{
+	priv_t * p = (priv_t *)effp->priv;
+	size_t odone = *osamp;
+
+	sample_t const * s = rate_output(&p->rate, NULL, &odone);
+	memcpy(obuf, s, odone * sizeof(double));
+
+	if (*isamp && odone < *osamp) {
+		sample_t * t = rate_input(&p->rate, NULL, *isamp);
+		memcpy(t, ibuf, *isamp * sizeof(double));
+		rate_process(&p->rate);
+	}
+	else *isamp = 0;
+	*osamp = odone;
+	return SOX_SUCCESS;
+}
+
 static int drain(sox_effect_t * effp, sox_sample_t * obuf, size_t * osamp)
 {
   priv_t * p = (priv_t *)effp->priv;
   static size_t isamp = 0;
   rate_flush(&p->rate);
   return flow(effp, 0, obuf, &isamp, osamp);
+}
+
+int sox_rate_drain_double(sox_effect_t * effp, double * obuf, size_t * osamp)
+{
+	priv_t * p = (priv_t *)effp->priv;
+	static size_t isamp = 0;
+	rate_flush(&p->rate);
+	return sox_rate_flow_double(effp, 0, obuf, &isamp, osamp);
 }
 
 static int stop(sox_effect_t * effp)
